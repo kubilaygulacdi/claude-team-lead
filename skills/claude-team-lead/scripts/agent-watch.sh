@@ -24,7 +24,14 @@ for a in json.load(sys.stdin)["result"]["agents"]:
   while read -r name state; do
     [ -z "$name" ] && continue
     now[$name]=$state
-    if [ "${prev[$name]:-}" != "$state" ] && [ "$state" != "working" ] && [ -n "${prev[$name]+x}" ]; then echo "$name: $state"; hit=1; fi
+    # An event: working -> done/idle (it finished), or any change to another state (blocked, …).
+    # done <-> idle alone is not one: an agent waiting on its own background shell flips between them.
+    if [ -n "${prev[$name]+x}" ] && [ "${prev[$name]}" != "$state" ] && [ "$state" != "working" ]; then
+      case "$state" in
+        done|idle) [ "${prev[$name]}" = working ] && { echo "$name: $state"; hit=1; } ;;
+        *) echo "$name: $state"; hit=1 ;;
+      esac
+    fi
   done <<< "$snap"
   for name in "${!prev[@]}"; do [ -z "${now[$name]+x}" ] && { echo "$name: gone"; hit=1; }; done
   [ "$ONCE" = 1 ] && [ "$hit" = 1 ] && exit 0
