@@ -5,16 +5,21 @@
 #   --once: exit after the first event. Run it as a background Bash command (up to 2 h) and re-run
 #           it after handling the event: one wake-up per event, no expiry notices.
 #   without: stream every event (for a Monitor, which expires after 30 min).
-# Only named agents count (`herdr agent start <name>`): the TL and other sessions have no name.
+# Only named agents (`herdr agent start <name>`) in the TL's own workspace ($HERDR_WORKSPACE_ID,
+# where the TL opens its agents as tabs) count: the TL, other sessions and other TLs' agents don't.
+# Outside herdr ($HERDR_WORKSPACE_ID unset) every named agent counts.
 ONCE=0; [ "${1:-}" = "--once" ] && { ONCE=1; shift; }
 INTERVAL="${1:-15}"
+# python3 where it runs; on Windows `python3` is often only the Microsoft Store stub.
+PY=python3; python3 -c '' 2>/dev/null || PY=python
 hit=0
 declare -A prev
 while true; do
-  snap=$(herdr agent list 2>/dev/null | python3 -c '
-import sys, json
+  snap=$(herdr agent list 2>/dev/null | "$PY" -c '
+import sys, json, os
+ws = os.environ.get("HERDR_WORKSPACE_ID")
 for a in json.load(sys.stdin)["result"]["agents"]:
-    if a.get("name"): print(a["name"], a.get("agent_status"))
+    if a.get("name") and (not ws or a.get("workspace_id") == ws): print(a["name"], a.get("agent_status"))
 ' 2>/dev/null) || { sleep "$INTERVAL"; continue; }
   declare -A now=()
   while read -r name state; do
