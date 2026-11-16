@@ -19,7 +19,7 @@ import sys, json
 only = set(sys.argv[1:])
 for a in json.load(sys.stdin)["result"]["agents"]:
     if a.get("name") and (not only or a["name"] in only): print(a["name"], a.get("agent_status"))
-' "$@" 2>/dev/null) || { sleep "$INTERVAL"; continue; }
+' "$@" 2>/dev/null | tr -d '\r') || { sleep "$INTERVAL"; continue; }  # Windows python ends lines with CRLF
   declare -A now=()
   while read -r name state; do
     [ -z "$name" ] && continue
