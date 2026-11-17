@@ -99,7 +99,7 @@ New machine or repo: the lead creates the App (GitHub → Settings → Developer
 - Keep `<repo>/.pm/HANDOFF.md` current (`templates/HANDOFF.md`): session-start steps, running agents, what's next, pending lead questions. A fresh TL reads it first.
   - It holds **this repo's work only**. Changes or caveats that belong to another repo (a service you call, a sibling project) are told to the lead in chat and not tracked here; that repo's own TL context tracks them. This repo's contract with the other side (what we send, what we expect back) stays.
 - Lead preferences and rules go into memory immediately; durable project knowledge goes into the area READMEs (agents write it), not into a diary.
-- Suggest `/clear` at natural breaks (after a merge wave).
+- Suggest `/clear` at natural breaks (after a merge wave). Before it, and whenever the lead asks whether they can clear, run the `handoff` skill: it brings the handoff file up to date and says whether clearing is safe now.
 - On a small machine keep about 3 agents + one dev server at a time and builds one at a time; check `free -m` before opening more.
 
 ## 9. Setup for a new project

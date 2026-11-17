@@ -39,10 +39,13 @@ Open Claude Code in your project and say something like *"be the team lead for t
 
 For a stand-up message, ask *"write my daily"*: it summarizes the major work since the last working day and what comes next, ready to paste into your team chat.
 
+Before you clear a session, ask *"can I clear?"*. It checks that the handoff file holds everything a new session needs, fills in what is missing, and tells you whether clearing is safe or what to wait for. This works in any project.
+
 ## What's inside
 
 - `skills/claude-team-lead/SKILL.md`: the playbook the TL follows.
 - `skills/daily/SKILL.md`: writes your daily stand-up message (yesterday / today) for the current project.
+- `skills/handoff/SKILL.md`: before a `/clear`, checks the handoff file and says whether clearing is safe.
 - `references/`: how to run agents with herdr or tmux.
 - `scripts/`: watch agents, clean up merged worktrees, post to GitHub as a bot.
 - `templates/`: brief, handoff and `CLAUDE.md` templates.
