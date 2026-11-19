@@ -31,7 +31,7 @@ Any harness works. What the playbook needs is six operations; pick a backend onc
 
 | Operation | What it must do |
 |---|---|
-| **Open** | a fresh agent in its **own git worktree** (`git fetch`, then a branch off `origin/dev`, or a detached checkout for reviews and research), with the chosen model and an auto/accept-edits permission mode |
+| **Open** | a fresh agent in its **own git worktree** (`git fetch`, then a branch off `origin/dev`, or a detached checkout for reviews and research), with the chosen model and an auto/accept-edits permission mode, visible to the lead **under the TL's own space** (in herdr: a worktree workspace linked under the repo's workspace, where the TL runs; in tmux: a window in the lead's session) |
 | **Name** | a name the lead can see, carrying the model: `<task> · <Model name>` |
 | **Prompt** | send the brief pointer, later revisions and answers to its questions |
 | **Read** | read its final report (and its screen if it seems stuck) |
