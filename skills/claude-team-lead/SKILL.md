@@ -36,12 +36,12 @@ Any harness works. What the playbook needs is six operations; pick a backend onc
 | **Prompt** | send the brief pointer, later revisions and answers to its questions |
 | **Read** | read its final report (and its screen if it seems stuck) |
 | **Watch** | get woken when it stops working (done, waiting, blocked, gone) without polling in the foreground |
-| **Close** | end it once its PR is merged or its report read; never close what you didn't open |
+| **Close** | end it in the same turn its PR is merged (state `MERGED`, worktree clean) or its report is read, without waiting to be asked; never close what you didn't open |
 
 **Backends:**
 
-- **Built-in sub-agents (any harness, nothing to install).** Claude Code's `Agent` tool with `isolation: "worktree"`, `model`, and a `description` that starts with the model (`Opus 5.5 · today lot`). It runs in the background in its own worktree and notifies you when done; continue it with `SendMessage`. Simplest and portable, but the lead can't watch or type into it directly, so prefer a terminal backend when the lead wants to see agents work.
-- **A terminal multiplexer** (one interactive Claude Code session per task, visible to the lead): see `references/herdr.md` (with `scripts/agent-watch.sh`) or `references/tmux.md`. Other multiplexers follow the same six operations.
+- **Built-in sub-agents (any harness, nothing to install).** Claude Code's `Agent` tool with `isolation: "worktree"`, `model`, and a `description` that starts with the model (`Opus 5.5 · today lot`). It runs in the background in its own worktree, notifies you when done and ends by itself with its report (**Close** is automatic); continue it with `SendMessage`. Simplest and portable, but the lead can't watch or type into it directly, so prefer a terminal backend when the lead wants to see agents work.
+- **A terminal multiplexer** (one interactive Claude Code session per task, visible to the lead): an interactive session never exits by itself, it waits for input after its report, so **Close** is always the TL's step. See `references/herdr.md` (with `scripts/agent-watch.sh`) or `references/tmux.md`. Other multiplexers follow the same six operations.
 
 Rules for every backend:
 - Always start the agent with its working directory in the repo or a worktree (a scratch dir stops at "trust this folder?").
@@ -49,7 +49,7 @@ Rules for every backend:
 - **A lead decision the agent's auto-mode classifier blocks** (e.g. removing request auth): the agent hears the decision second-hand from the TL, so the classifier may deny the edit. Don't work around it. Ask the lead to type a one-line approval into that agent's input ("I approve removing the token; carry out .pm/<slug>-00N.md"); this is the one case where the lead goes to an agent's pane.
 - **Watching** runs as a background command (or the harness's own notification), never a foreground loop. Avoid watchers that expire every 30 minutes: each expiry notice interrupts the lead.
 - **After a terminal close or reboot:** sessions come back without processes (or not at all). Resume each agent in its worktree with `claude --continue` and the prompt "continue from the worktree". Restart dev previews too.
-- **A follow-up to a merged task** (a regression it caused, a review finding found after the merge) may go to the same agent, which already knows the code: it starts a **new branch off `origin/dev`** in its worktree (`git switch -c <fix/slug> origin/dev`) and opens a new PR. Every task still gets its own short-lived branch and PR; only the session is reused. Unrelated work gets a fresh agent.
+- **A follow-up to a merged task** (a regression it caused, a review finding found after the merge) may go to the same agent, which already knows the code: resume its closed session in its worktree (`claude --continue`, §2 above) and it starts a **new branch off `origin/dev`** in its worktree (`git switch -c <fix/slug> origin/dev`) and opens a new PR. Every task still gets its own short-lived branch and PR; only the session is reused. Unrelated work gets a fresh agent.
 - **Parallel agents** may run when their tasks touch different files. When two could touch the same area, each brief names what the other owns ("another agent is changing X; don't touch it") so the branches merge cleanly.
 
 ## 3. Model per task
@@ -78,7 +78,7 @@ Decide yourself, don't ask; show the model in the agent's name. When unsure, use
 4. Tell the lead what to check on the dev preview. Release `dev` → `main` only after their explicit OK.
    - **Release:** a PR `dev` → `main` titled `release: vX.Y.Z`, merged with a **merge commit** (`gh pr merge N --merge`), not a squash, so `main` keeps each squashed task commit. Then an annotated tag on the merge commit and a GitHub Release with short notes and the deploy steps: `git tag -a vX.Y.Z <sha> -m "…"`, `git push origin vX.Y.Z`, `gh release create vX.Y.Z --verify-tag --title vX.Y.Z --notes "…"`.
    - **Version bump:** a fix → patch, a feature → minor, a DB migration (or another change the deploy must handle by hand) → major. Record the rule in memory if the lead sets another one.
-5. **Cleanup:** the auto-mode classifier may block you from deleting worktrees/branches. Ask the lead to run `! bash <skill-dir>/scripts/cleanup-worktrees.sh <repo>`: it removes task worktrees and local branches whose PR is merged, and keeps `env-*`, `dev`, `main` and anything with uncommitted changes. Merged branches on GitHub are deleted by the repo setting from §9; if it is off, delete them (`git push origin --delete <branch>`) after checking each one's PR is merged.
+5. **Cleanup:** close the task's agent first (§2 **Close**). The auto-mode classifier may block you from deleting worktrees/branches. Ask the lead to run `! bash <skill-dir>/scripts/cleanup-worktrees.sh <repo>`: it removes task worktrees and local branches whose PR is merged, and keeps `env-*`, `dev`, `main` and anything with uncommitted changes. Merged branches on GitHub are deleted by the repo setting from §9; if it is off, delete them (`git push origin --delete <branch>`) after checking each one's PR is merged.
 
 ## 6. GitHub bot
 
@@ -116,6 +116,6 @@ New machine or repo: the lead creates the App (GitHub → Settings → Developer
 ## 10. Session start
 
 1. Read `.pm/HANDOFF.md`, then memory.
-2. List the running agents with your backend; resume dead ones (§2); start the watcher if any run.
+2. List the running agents with your backend: close this repo's task agents whose PR is already merged or whose report was read, resume dead ones that still have work (§2), start the watcher if any run.
 3. Start the dev preview if the lead will check something.
 4. `gh pr list` for open PRs waiting on review.
